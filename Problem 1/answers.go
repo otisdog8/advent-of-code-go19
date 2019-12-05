@@ -17,7 +17,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dataparts := strings.Split(string(data), "\n")
+	dataparts := strings.Split(string(data), "\r\n")
 
 	for i := 0; i < len(dataparts); i++ {
 		num, err := strconv.Atoi(dataparts[i])
