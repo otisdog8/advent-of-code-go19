@@ -9,14 +9,10 @@ import (
 )
 
 func main() {
-	for i := 0; i < 100; i++ {
-		for j := 0; j < 100; j++ {
-			vm(i, j)
-		}
-	}
+	fmt.Println("gamer")
 }
 
-func vm(noun, verb int) {
+func setupvm() {
 
 	// Setup
 	data, err := ioutil.ReadFile("inputs.txt")
@@ -29,27 +25,26 @@ func vm(noun, verb int) {
 
 	var length int = len(dataparts)
 	var vmmemory = make([]int, length)
-	var instptr int = 0
 
 	for i, v := range dataparts {
 		vmmemory[i], _ = strconv.Atoi(v)
 	}
+}
 
-	vmmemory[1] = noun
-	vmmemory[2] = verb
+func vm(memory []int) []int {
+	var instptr int = 0
 
-	for !processopcode(vmmemory, instptr) {
+	for !processopcode(memory, instptr) {
 		instptr += 4
 	}
 
-	if vmmemory[0] == 19690720 {
-		fmt.Println(strconv.Itoa(noun))
-		fmt.Println(strconv.Itoa(verb))
-	}
+	return memory
 }
 
 func processopcode(memory []int, ptr int) bool {
 	var retval bool = false // To exit or not
+	// Make mode and inputs an int array?
+	// Change instruction ptr in here too?
 
 	if memory[ptr] == 1 {
 		var inaddr1, inaddr2, outaddr1 int
