@@ -29,15 +29,11 @@ func setupvm() {
 
 	//VM runtime
 	inputs = make([]*big.Int, 1, 1)
-	inputs[0] = tobig(1)
 	inputptr = 0
 	outputs = make([]*big.Int, 0, 10)
 	outputptr = 0
 	relptr = 0
 	vm()
-
-	fmt.Println(strconv.Itoa(toint(memory[0])))
-
 }
 
 func readmem(filename string) []*big.Int {
@@ -100,22 +96,18 @@ func processopcode(ptr int) (int, bool) {
 	} else if ptrinst(ptr, 99) {
 		retval = true
 		tempptr = 1
-	} else {
-		fmt.Println("VM ERROR")
 	}
 
 	return ptr + tempptr, retval
 }
 
 func ptrinst(index, value int) bool {
+
 	return big.NewInt(0).Mod(getval(index), big.NewInt(100)).Cmp(big.NewInt(int64(value))) == 0
 }
 
 func intindex(val *big.Int, index int) int {
 	var num int = int(val.Int64())
-	//fmt.Println(strconv.Itoa(toint(val)))
-	//fmt.Println(strconv.Itoa(num%pow(10, index+1) - num%pow(10, index)))
-
 	return num%pow(10, index+1) - num%pow(10, index)
 }
 
@@ -132,11 +124,11 @@ func opcode1(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 3)
 	var param2 int = intindex(opcode, 4)
-	//var param3 int = intindex(opcode, 5)
+	var param3 int = intindex(opcode, 5)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
-	var paramval3 int = toint(getval(ptr + 3))
+	var paramval3 int = toint(fetchvalue(tobig(ptr+3), param3))
 
 	setval(paramval3, paramval2.Add(paramval1, paramval2))
 
@@ -148,11 +140,11 @@ func opcode2(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 3)
 	var param2 int = intindex(opcode, 4)
-	//var param3 int = intindex(opcode, 5)
+	var param3 int = intindex(opcode, 5)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
-	var paramval3 int = toint(getval(ptr + 3))
+	var paramval3 int = toint(fetchvalue(tobig(ptr+3), param3))
 
 	setval(paramval3, paramval2.Mul(paramval1, paramval2))
 
@@ -160,11 +152,11 @@ func opcode2(ptr int) (bool, int) {
 }
 
 func opcode3(ptr int) (bool, int) {
-	//var opcode *big.Int = getval(ptr)
+	var opcode *big.Int = getval(ptr)
 
-	//var param1 int = intindex(opcode, 3)
+	var param1 int = intindex(opcode, 3)
 
-	var paramval1 int = toint(getval(ptr + 1))
+	var paramval1 int = toint(fetchvalue(getval(ptr+1), param1))
 
 	setval(paramval1, inputs[inputptr])
 	inputptr++
@@ -178,7 +170,6 @@ func opcode4(ptr int) (bool, int) {
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 
-	fmt.Println(strconv.Itoa(toint(paramval1)))
 	outputs = append(outputs, paramval1)
 	return false, 2
 }
@@ -195,8 +186,7 @@ func opcode9(ptr int) (bool, int) {
 }
 
 func fetchvalue(address *big.Int, mode int) *big.Int {
-	//fmt.Println(strconv.Itoa(mode))
-
+	fmt.Println(strconv.Itoa(mode))
 	var retval *big.Int = big.NewInt(int64(0))
 	if mode == 0 {
 		retval = getval(int(address.Int64()))
