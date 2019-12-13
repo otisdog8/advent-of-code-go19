@@ -20,32 +20,94 @@ var relptr int
 var globaldump string = ""
 
 func main() {
-	setupvm()
+	var items []int = make([]int, 5, 5)
+	items[0] = 0
+	items[1] = 1
+	items[2] = 2
+	items[3] = 3
+	items[4] = 4
+
+	var permuts [][]int = permutations(items)
+
+	var max int = 0
+
+	for _, v := range permuts {
+		var result int = 0
+		for i := 0; i < 5; i++ {
+			result = setupvm(result, v[i])
+		}
+		if result > max {
+			max = result
+			fmt.Println(result)
+			for _, i := range v {
+				printint(i)
+			}
+		}
+	}
+
+	printint(max)
+}
+
+func permutations(arr []int) [][]int {
+	var helper func([]int, int)
+	res := [][]int{}
+
+	helper = func(arr []int, n int) {
+		if n == 1 {
+			tmp := make([]int, len(arr))
+			copy(tmp, arr)
+			res = append(res, tmp)
+		} else {
+			for i := 0; i < n; i++ {
+				helper(arr, n-1)
+				if n%2 == 1 {
+					tmp := arr[i]
+					arr[i] = arr[n-1]
+					arr[n-1] = tmp
+				} else {
+					tmp := arr[0]
+					arr[0] = arr[n-1]
+					arr[n-1] = tmp
+				}
+			}
+		}
+	}
+	helper(arr, len(arr))
+	return res
+}
+
+func in(test [5]int, array [][5]int) bool {
+	var retval bool = false
+	for _, v := range array {
+		if v == test {
+			retval = true
+		}
+	}
+	return retval
 }
 
 //Global Scope Management
 
-func setupvm() {
+func setupvm(input, phase int) int {
 	var memory []*big.Int = readmem("inputs.txt")
 	loadmem(memory)
 
 	//VM runtime
-	inputs = make([]*big.Int, 1, 1)
-	inputs[0] = tobig(5)
+	inputs = make([]*big.Int, 2, 2)
 	inputptr = 0
 	outputs = make([]*big.Int, 0, 10)
 	outputptr = 0
 	relptr = 0
 
+	inputs[0] = tobig(phase)
+	inputs[1] = tobig(input)
+
 	vm()
 
+	return toint(outputs[0])
 	//f, _ := os.Create("file2.txt")
 	//f.WriteString(globaldump)
 	//f.Sync()
-
-	for _, v := range outputs {
-		printbig(v)
-	}
 
 }
 

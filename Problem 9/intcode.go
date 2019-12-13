@@ -31,11 +31,12 @@ func setupvm() {
 
 	//VM runtime
 	inputs = make([]*big.Int, 1, 1)
-	inputs[0] = tobig(5)
 	inputptr = 0
 	outputs = make([]*big.Int, 0, 10)
 	outputptr = 0
 	relptr = 0
+
+	inputs[0] = tobig(2)
 
 	vm()
 
@@ -145,16 +146,16 @@ func opcode000(ptr int) (bool, int) {
 	//Return result
 	return false, 1
 }
-
 func opcode1(ptr int) (bool, int) {
 	var opcode *big.Int = getval(ptr)
 
 	var param1 int = intindex(opcode, 2)
 	var param2 int = intindex(opcode, 3)
+	var param3 int = intindex(opcode, 4)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
-	var paramval3 int = toint(getval(ptr + 3))
+	var paramval3 int = toint(fetchwriteval(getval(ptr+3), param3))
 
 	setval(paramval3, tobig(0).Add(paramval1, paramval2))
 
@@ -166,10 +167,11 @@ func opcode2(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 2)
 	var param2 int = intindex(opcode, 3)
+	var param3 int = intindex(opcode, 4)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
-	var paramval3 int = toint(getval(ptr + 3))
+	var paramval3 int = toint(fetchwriteval(getval(ptr+3), param3))
 
 	setval(paramval3, tobig(0).Mul(paramval1, paramval2))
 
@@ -177,8 +179,11 @@ func opcode2(ptr int) (bool, int) {
 }
 
 func opcode3(ptr int) (bool, int) {
+	var opcode *big.Int = getval(ptr)
 
-	var paramval1 int = toint(getval(ptr + 1))
+	var param1 int = intindex(opcode, 2)
+
+	var paramval1 int = toint(fetchwriteval(getval(ptr+1), param1))
 
 	setval(paramval1, inputs[inputptr])
 	inputptr++
@@ -237,10 +242,11 @@ func opcode7(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 2)
 	var param2 int = intindex(opcode, 3)
+	var param3 int = intindex(opcode, 4)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
-	var paramval3 int = toint(getval(ptr + 3))
+	var paramval3 int = toint(fetchwriteval(getval(ptr+3), param3))
 
 	if paramval1.Cmp(paramval2) == -1 {
 		setval(paramval3, tobig(1))
@@ -256,10 +262,11 @@ func opcode8(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 2)
 	var param2 int = intindex(opcode, 3)
+	var param3 int = intindex(opcode, 4)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
-	var paramval3 int = toint(getval(ptr + 3))
+	var paramval3 int = toint(fetchwriteval(getval(ptr+3), param3))
 
 	if paramval1.Cmp(paramval2) == 0 {
 		setval(paramval3, tobig(1))
@@ -295,12 +302,26 @@ func fetchvalue(address *big.Int, mode int) *big.Int {
 	return retval
 }
 
+func fetchwriteval(address *big.Int, mode int) *big.Int {
+	var retval *big.Int = big.NewInt(int64(0))
+	if mode == 0 {
+		retval = address
+	} else if mode == 1 {
+		retval = address
+	} else if mode == 2 {
+		retval = retval.Add(address, tobig(relptr))
+	}
+
+	return retval
+}
+
 func getval(index int) *big.Int {
-	if index-1 > cap(memory) {
-		newmem := make([]*big.Int, index, index)
+	if index+1 > cap(memory) {
+		newmem := make([]*big.Int, index+1, index+1)
 		copy(newmem, memory)
 		memory = newmem
 	}
+
 	if memory[index] == nil {
 		memory[index] = tobig(0)
 	}
@@ -308,8 +329,8 @@ func getval(index int) *big.Int {
 }
 
 func setval(index int, value *big.Int) {
-	if index-1 > cap(memory) {
-		newmem := make([]*big.Int, index, index)
+	if index+1 > cap(memory) {
+		newmem := make([]*big.Int, index+1, index+1)
 		copy(newmem, memory)
 		memory = newmem
 	}
