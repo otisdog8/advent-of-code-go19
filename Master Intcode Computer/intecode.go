@@ -56,6 +56,7 @@ func readmem(filename string) []*big.Int {
 	for i, v := range dataparts {
 		temp, _ := strconv.Atoi(v)
 		vmmemory[i] = big.NewInt(int64(temp))
+		printbig(vmmemory[i])
 	}
 
 	return vmmemory
@@ -113,8 +114,6 @@ func ptrinst(index, value int) bool {
 
 func intindex(val *big.Int, index int) int {
 	var num int = int(val.Int64())
-	//fmt.Println(strconv.Itoa(toint(val)))
-	//fmt.Println(strconv.Itoa(num%pow(10, index+1) - num%pow(10, index)))
 
 	return num%pow(10, index+1) - num%pow(10, index)
 }
@@ -132,7 +131,6 @@ func opcode1(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 3)
 	var param2 int = intindex(opcode, 4)
-	//var param3 int = intindex(opcode, 5)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
@@ -148,7 +146,6 @@ func opcode2(ptr int) (bool, int) {
 
 	var param1 int = intindex(opcode, 3)
 	var param2 int = intindex(opcode, 4)
-	//var param3 int = intindex(opcode, 5)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
@@ -160,9 +157,6 @@ func opcode2(ptr int) (bool, int) {
 }
 
 func opcode3(ptr int) (bool, int) {
-	//var opcode *big.Int = getval(ptr)
-
-	//var param1 int = intindex(opcode, 3)
 
 	var paramval1 int = toint(getval(ptr + 1))
 
@@ -178,7 +172,6 @@ func opcode4(ptr int) (bool, int) {
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 
-	fmt.Println(strconv.Itoa(toint(paramval1)))
 	outputs = append(outputs, paramval1)
 	return false, 2
 }
@@ -195,7 +188,6 @@ func opcode9(ptr int) (bool, int) {
 }
 
 func fetchvalue(address *big.Int, mode int) *big.Int {
-	//fmt.Println(strconv.Itoa(mode))
 
 	var retval *big.Int = big.NewInt(int64(0))
 	if mode == 0 {
@@ -224,7 +216,14 @@ func setval(index int, value *big.Int) {
 		copy(newmem, memory)
 		memory = newmem
 	}
+
 	memory[index] = value
+}
+
+func dumpmem() {
+	for i := 0; i < len(memory); i++ {
+		fmt.Println(strconv.Itoa(toint(memory[i])))
+	}
 }
 
 func pow(base, exp int) int {
@@ -236,4 +235,12 @@ func toint(num *big.Int) int {
 }
 func tobig(num int) *big.Int {
 	return big.NewInt(int64(num))
+}
+
+func printbig(num *big.Int) {
+	printint(toint(num))
+}
+
+func printint(num int) {
+	fmt.Println(strconv.Itoa(num))
 }

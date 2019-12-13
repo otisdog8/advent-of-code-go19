@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	fmt.Println("gamer")
+	setupvm()
 }
 
 func setupvm() {
@@ -28,7 +28,12 @@ func setupvm() {
 
 	for i, v := range dataparts {
 		vmmemory[i], _ = strconv.Atoi(v)
+		fmt.Println(v)
 	}
+
+	vm(vmmemory)
+
+	fmt.Println(strconv.Itoa(vmmemory[0]))
 }
 
 func vm(memory []int) []int {
@@ -62,18 +67,28 @@ func processopcode(memory []int, ptr int) bool {
 		retval = true //Exits
 	}
 
+	printint(memory[6])
+
 	return retval
 }
 
 func opcode1(memory []int, mode, inaddr1, inaddr2, outaddr1 int) bool {
+	//fmt.Println("1")
+	//printint(fetchvalue(memory, inaddr1, mode))
+	//printint(fetchvalue(memory, inaddr2, mode))
 	var output int = fetchvalue(memory, inaddr1, mode) + fetchvalue(memory, inaddr2, mode)
 	memory[outaddr1] = output
+	//printint(output)
 	return false
 }
 
 func opcode2(memory []int, mode, inaddr1, inaddr2, outaddr1 int) bool {
+	//fmt.Println("2")
+	//printint(fetchvalue(memory, inaddr1, mode))
+	//printint(fetchvalue(memory, inaddr2, mode))
 	var output int = fetchvalue(memory, inaddr1, mode) * fetchvalue(memory, inaddr2, mode)
 	memory[outaddr1] = output
+	//printint(output)
 	return false
 }
 
@@ -86,4 +101,8 @@ func fetchvalue(memory []int, address, mode int) int {
 	}
 
 	return retval
+}
+
+func printint(num int) {
+	fmt.Println(strconv.Itoa(num))
 }
