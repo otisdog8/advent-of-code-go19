@@ -17,6 +17,8 @@ var outputs []*big.Int
 var outputptr int
 var relptr int
 
+var globaldump string = ""
+
 func main() {
 	setupvm()
 }
@@ -29,14 +31,19 @@ func setupvm() {
 
 	//VM runtime
 	inputs = make([]*big.Int, 1, 1)
-	inputs[0] = tobig(1)
 	inputptr = 0
 	outputs = make([]*big.Int, 0, 10)
 	outputptr = 0
 	relptr = 0
 	vm()
 
-	fmt.Println(strconv.Itoa(toint(memory[0])))
+	//f, _ := os.Create("file2.txt")
+	//f.WriteString(globaldump)
+	//f.Sync()
+
+	for _, v := range outputs {
+		printbig(v)
+	}
 
 }
 
@@ -54,9 +61,11 @@ func readmem(filename string) []*big.Int {
 	var vmmemory []*big.Int = make([]*big.Int, length, length)
 
 	for i, v := range dataparts {
-		temp, _ := strconv.Atoi(v)
-		vmmemory[i] = big.NewInt(int64(temp))
-		printbig(vmmemory[i])
+		temp, err := strconv.Atoi(v)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		vmmemory[i] = tobig(temp)
 	}
 
 	return vmmemory
@@ -102,7 +111,8 @@ func processopcode(ptr int) (int, bool) {
 		retval = true
 		tempptr = 1
 	} else {
-		fmt.Println("VM ERROR")
+		printint(ptr)
+		printbig(getval(ptr))
 	}
 
 	return ptr + tempptr, retval
@@ -115,7 +125,7 @@ func ptrinst(index, value int) bool {
 func intindex(val *big.Int, index int) int {
 	var num int = int(val.Int64())
 
-	return num%pow(10, index+1) - num%pow(10, index)
+	return (num%pow(10, index+1) - num%pow(10, index)) / pow(10, index)
 }
 
 func opcode000(ptr int) (bool, int) {
@@ -129,14 +139,14 @@ func opcode000(ptr int) (bool, int) {
 func opcode1(ptr int) (bool, int) {
 	var opcode *big.Int = getval(ptr)
 
-	var param1 int = intindex(opcode, 3)
-	var param2 int = intindex(opcode, 4)
+	var param1 int = intindex(opcode, 2)
+	var param2 int = intindex(opcode, 3)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
 	var paramval3 int = toint(getval(ptr + 3))
 
-	setval(paramval3, paramval2.Add(paramval1, paramval2))
+	setval(paramval3, tobig(0).Add(paramval1, paramval2))
 
 	return false, 4
 }
@@ -144,14 +154,14 @@ func opcode1(ptr int) (bool, int) {
 func opcode2(ptr int) (bool, int) {
 	var opcode *big.Int = getval(ptr)
 
-	var param1 int = intindex(opcode, 3)
-	var param2 int = intindex(opcode, 4)
+	var param1 int = intindex(opcode, 2)
+	var param2 int = intindex(opcode, 3)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
 	var paramval2 *big.Int = fetchvalue(getval(ptr+2), param2)
 	var paramval3 int = toint(getval(ptr + 3))
 
-	setval(paramval3, paramval2.Mul(paramval1, paramval2))
+	setval(paramval3, tobig(0).Mul(paramval1, paramval2))
 
 	return false, 4
 }
@@ -168,9 +178,11 @@ func opcode3(ptr int) (bool, int) {
 func opcode4(ptr int) (bool, int) {
 	var opcode *big.Int = getval(ptr)
 
-	var param1 int = intindex(opcode, 3)
+	var param1 int = intindex(opcode, 2)
 
 	var paramval1 *big.Int = fetchvalue(getval(ptr+1), param1)
+
+	printbig(paramval1)
 
 	outputs = append(outputs, paramval1)
 	return false, 2
@@ -179,7 +191,7 @@ func opcode4(ptr int) (bool, int) {
 func opcode9(ptr int) (bool, int) {
 	var opcode *big.Int = getval(ptr)
 
-	var param1 int = intindex(opcode, 3)
+	var param1 int = intindex(opcode, 2)
 
 	var paramval1 int = toint(fetchvalue(getval(ptr+1), param1))
 
@@ -207,6 +219,9 @@ func getval(index int) *big.Int {
 		copy(newmem, memory)
 		memory = newmem
 	}
+	if memory[index] == nil {
+		memory[index] = tobig(0)
+	}
 	return memory[index]
 }
 
@@ -222,7 +237,7 @@ func setval(index int, value *big.Int) {
 
 func dumpmem() {
 	for i := 0; i < len(memory); i++ {
-		fmt.Println(strconv.Itoa(toint(memory[i])))
+		globaldump += strconv.Itoa(toint(memory[i])) + "\n"
 	}
 }
 
@@ -230,9 +245,14 @@ func pow(base, exp int) int {
 	return int(math.Pow(float64(base), float64(exp)))
 }
 
+func log10(num int) int {
+	return int(math.Floor(math.Log10(float64(num))))
+}
+
 func toint(num *big.Int) int {
 	return int(num.Int64())
 }
+
 func tobig(num int) *big.Int {
 	return big.NewInt(int64(num))
 }
